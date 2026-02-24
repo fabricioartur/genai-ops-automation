@@ -15,5 +15,5 @@ class RiskLevel(str, Enum):
 
 class RecommendedAction(str, Enum):
     MONITOR = "Monitor"
-    PROACTIVE_MONITOR = "Proactively monitor"
     ESCALATE = "Escalate to regional ops team"
+    PROACTIVE_MONITOR = "Proactively monitor"
