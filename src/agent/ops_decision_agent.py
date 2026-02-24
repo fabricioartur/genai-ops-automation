@@ -1,12 +1,17 @@
+from src.engine.decision_rules import order_delay_rule
+from src.models.enums import IncidentType
+
+
 class OpsDecisionAgent:
     """
     Decision-oriented agent for operational workflows in food delivery platforms.
 
-    This agent analyzes structured operational scenarios and returns
-    risk classifications and recommended actions.
+    This agent orchestrates decision-making by:
+    - Validating input scenarios
+    - Routing scenarios to the appropriate decision rules
+    - Returning structured, explainable recommendations
 
-    Current implementation uses deterministic logic and mock reasoning,
-    without dependency on external AI APIs.
+    The decision logic itself lives in the engine layer.
     """
 
     def analyze(self, scenario: dict) -> dict:
@@ -19,52 +24,25 @@ class OpsDecisionAgent:
 
         self._validate_input(scenario)
 
-        incident_type = scenario.get("incident_type", "unknown")
+        incident_type = scenario.get("incident_type")
 
-        if incident_type == "order_delay":
-            return self._handle_order_delay(scenario)
+        if incident_type == IncidentType.ORDER_DELAY:
+            return order_delay_rule(scenario)
 
         return self._default_response(incident_type)
 
-    def _handle_order_delay(self, scenario: dict) -> dict:
-        delay = scenario.get("delay_minutes", 0)
-        priority = scenario.get("priority_order", False)
-
-        if delay >= 20:
-            return {
-                "incident_type": "Order Delay",
-                "risk_level": "High",
-                "recommended_action": "Escalate to regional ops team",
-                "escalation_guidance": "Notify senior operator",
-                "notes": "High risk of SLA breach detected"
-            }
-
-        if priority and delay >= 10:
-            return {
-                "incident_type": "Order Delay",
-                "risk_level": "Medium",
-                "recommended_action": "Proactively monitor",
-                "escalation_guidance": "Prepare escalation if delay increases",
-                "notes": "Priority order with growing delay"
-            }
-
-        return {
-            "incident_type": "Order Delay",
-            "risk_level": "Low",
-            "recommended_action": "Monitor",
-            "escalation_guidance": "None",
-            "notes": "Delay within acceptable limits"
-        }
-
     def _default_response(self, incident_type: str) -> dict:
+        """
+        Fallback response for unsupported or unknown incident types.
+        """
         return {
-            "incident_type": incident_type,
+            "incident_type": incident_type or "unknown",
             "risk_level": "Low",
             "recommended_action": "Monitor",
-            "escalation_guidance": "None",
-            "notes": "No predefined risk rules for this incident"
+            "notes": "No predefined decision rules for this incident type"
         }
 
-    def _validate_input(self, scenario: dict):
+    @staticmethod
+    def _validate_input(scenario: dict):
         if not isinstance(scenario, dict):
             raise ValueError("Scenario must be a dictionary")
